@@ -1,0 +1,64 @@
+
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ultron</title>
+<style>
+  body { font-family: system-ui, sans-serif; background:#0f1115; color:#e6e6e6; margin:0; padding:24px; }
+  h1 { margin:0; font-size:28px; letter-spacing:3px; }
+  .sub { color:#9aa0a6; margin:4px 0 24px; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:16px; }
+  .card { background:#181b21; border-radius:12px; padding:16px; border-left:6px solid #555; }
+  .card h2 { font-size:14px; color:#9aa0a6; margin:0 0 8px; font-weight:500; }
+  .big { font-size:28px; font-weight:600; }
+  .small { color:#9aa0a6; font-size:13px; margin-top:4px; }
+  .ok { border-left-color:#2e7d32; } .warn { border-left-color:#f9a825; } .crit { border-left-color:#c62828; }
+  ul { list-style:none; padding:0; margin:0; }
+  li { display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid #262a31; }
+  .pill { padding:2px 10px; border-radius:999px; font-size:12px; }
+  .pill.up { background:#1b5e20; } .pill.down { background:#b71c1c; }
+</style>
+</head>
+<body>
+  <h1>ULTRON</h1>
+  <div class="sub">Watching <b id="host">...</b> · up <span id="uptime">-</span> h · updated <span id="updated">-</span></div>
+  <div class="grid">
+    <div class="card" id="cpu"><h2>CPU load</h2><div class="big" id="cpu-val">-</div><div class="small" id="cpu-sub"></div></div>
+    <div class="card" id="memory"><h2>Memory available</h2><div class="big" id="memory-val">-</div><div class="small" id="memory-sub"></div></div>
+    <div class="card" id="disk"><h2>Disk / used</h2><div class="big" id="disk-val">-</div><div class="small" id="disk-sub"></div></div>
+    <div class="card" id="services"><h2>Services</h2><ul id="svc-list"></ul></div>
+  </div>
+<script>
+function setCard(id, status, value, sub) {
+  document.getElementById(id).className = "card " + status;
+  document.getElementById(id + "-val").textContent = value;
+  document.getElementById(id + "-sub").textContent = sub;
+}
+async function refresh() {
+  try {
+    const d = await (await fetch("/api/health")).json();
+    document.getElementById("host").textContent = d.host;
+    document.getElementById("uptime").textContent = d.uptime_hours;
+    document.getElementById("updated").textContent = new Date().toLocaleTimeString();
+    setCard("cpu", d.cpu.status, d.cpu.load, "on " + d.cpu.cores + " cores");
+    setCard("memory", d.memory.status, d.memory.available_pct + "%", d.memory.available_mb + " of " + d.memory.total_mb + " MB");
+    setCard("disk", d.disk.status, d.disk.used_pct + "%", d.disk.free_gb + " GB free");
+    let html = "", allUp = true;
+    for (const [name, state] of Object.entries(d.services)) {
+      const up = state === "active";
+      if (!up) allUp = false;
+      html += "<li>" + name + '<span class="pill ' + (up ? "up" : "down") + '">' + state + "</span></li>";
+    }
+    document.getElementById("svc-list").innerHTML = html;
+    document.getElementById("services").className = "card " + (allUp ? "ok" : "crit");
+  } catch (e) {
+    document.getElementById("updated").textContent = "connection lost";
+  }
+}
+refresh();
+setInterval(refresh, 5000);
+</script>
+</body>
+</html>
