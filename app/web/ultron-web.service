@@ -1,5 +1,3 @@
-
-cat > ultron-web.service <<'EOF'
 [Unit]
 Description=Ultron web app
 After=network.target
