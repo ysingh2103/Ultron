@@ -1,0 +1,14 @@
+
+cat > ultron-web.service <<'EOF'
+[Unit]
+Description=Ultron web app
+After=network.target
+
+[Service]
+User=otl
+WorkingDirectory=/home/otl/ultron/app/web
+ExecStart=/home/otl/ultron/app/web/.venv/bin/gunicorn --workers 2 --bind 0.0.0.0:5000 --access-logfile - app:app
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
