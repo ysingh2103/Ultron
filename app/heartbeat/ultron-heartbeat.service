@@ -1,0 +1,15 @@
+
+[Unit]
+Description=Ultron heartbeat - basic health logger
+After=network-online.target docker.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=otl
+ExecStart=/usr/local/bin/ultron-heartbeat.sh
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
